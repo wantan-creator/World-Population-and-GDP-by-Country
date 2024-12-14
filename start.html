@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Population and GDP by Country</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #populationChart {
+            width: 100%;
+            height: 400px;
+        }
+        /* Add styles for sorting indicators */
+        th.asc::after {
+            content: ' ▲'; /* Up arrow for ascending */
+            font-size: 0.8em; /* Adjust the size as needed */
+        }
+        th.desc::after {
+            content: ' ▼'; /* Down arrow for descending */
+            font-size: 0.8em; /* Adjust the size as needed */
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>World Population and GDP Country</h1>
+    <table id="populationTable">
+        <thead>
+            <tr>
+                <th id="countryHeader">Country</th>
+                <th id="populationHeader">Population</th>
+                <th id="gdpHeader">GDP</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <canvas id="populationChart"></canvas>
+    <canvas id="gdpChart"></canvas>
+
+    <script>
+        const populationData = [
+            { country: "China", population: 1444216107, gdpPerCapita: 10500 },
+            { country: "India", population: 1393409038, gdpPerCapita: 2200 },
+            { country: "United States", population: 331002651, gdpPerCapita: 65000 },
+            { country: "Indonesia", population: 273523615, gdpPerCapita: 4000 },
+            { country: "Pakistan", population: 225199937, gdpPerCapita: 1500 },
+            { country: "Brazil", population: 213993437, gdpPerCapita: 9000 },
+            { country: "Nigeria", population: 211400708, gdpPerCapita: 2500 },
+            { country: "Bangladesh", population: 166303498, gdpPerCapita: 1800 },
+            { country: "Russia", population: 145912025, gdpPerCapita: 11000 },
+            { country: "Mexico", population: 130262216, gdpPerCapita: 9500 },
+            { country: "Philippines", population: 113882000, gdpPerCapita: 3500 },
+            { country: "Vietnam", population: 98168829, gdpPerCapita: 3000 },
+            { country: "Ethiopia", population: 114114000, gdpPerCapita: 900 },
+            { country: "Egypt", population: 102334000, gdpPerCapita: 3000 },
+            { country: "DR Congo", population: 89561403, gdpPerCapita: 600 },
+            { country: "Turkey", population: 84339067, gdpPerCapita: 9000 },
+        ];
+
+        const tableBody = document.getElementById('populationTable').getElementsByTagName('tbody')[0];
+
+        populationData.forEach(data => {
+            const row = tableBody.insertRow();
+            const cellCountry = row.insertCell(0);
+            const cellPopulation = row.insertCell(1);
+            const cellGdpPerCapita = row.insertCell(2);
+            cellCountry.textContent = data.country;
+            cellPopulation.textContent = data.population.toLocaleString();
+            cellGdpPerCapita.textContent = `$${data.gdpPerCapita.toLocaleString()}`;
+        });
+
+        // Prepare data for the population chart
+        const labels = populationData.map(data => data.country);
+        const populations = populationData.map(data => data.population);
+        const gdpPerCapita = populationData.map(data => data.gdpPerCapita);
+
+        // Initialize Population Chart
+        const ctxPopulation = document.getElementById('populationChart').getContext('2d');
+        const populationChart = new Chart(ctxPopulation, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Population',
+                    data: populations,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Population'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Country'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize GDP Chart
+        const ctxGdp = document.getElementById('gdpChart').getContext('2d');
+        const gdpChart = new Chart(ctxGdp, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'GDP',
+                    data: gdpPerCapita,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'GDP per Capita ($)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Country'
+                        }
+                    }
+                }
+            }
+        });
+
+        let currentSort = {
+            column: null,
+            direction: 'asc' // 'asc' or 'desc'
+        };
+
+        // Function to sort the population data
+        function sortPopulationData(criteria) {
+            if (currentSort.column === criteria) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = criteria;
+                currentSort.direction = 'asc';
+            }
+
+            if (criteria === 'population') {
+                populationData.sort((a, b) => currentSort.direction === 'asc' ? a.population - b.population : b.population - a.population);
+            } else if (criteria === 'gdp') {
+                populationData.sort((a, b) => currentSort.direction === 'asc' ? a.gdpPerCapita - b.gdpPerCapita : b.gdpPerCapita - a.gdpPerCapita);
+            } else if (criteria === 'country') {
+                populationData.sort((a, b) => currentSort.direction === 'asc' ? a.country.localeCompare(b.country) : b.country.localeCompare(a.country));
+            }
+
+            updateTable();
+            updateCharts();
+            updateHeaderStyles();
+        }
+
+        // Function to update header styles based on sorting direction
+        function updateHeaderStyles() {
+            const headers = document.querySelectorAll('th');
+            headers.forEach(header => {
+                header.classList.remove('asc', 'desc'); // Remove existing classes
+            });
+
+            if (currentSort.column) {
+                const activeHeader = document.getElementById(currentSort.column + 'Header');
+                activeHeader.classList.add(currentSort.direction); // Add the current direction class
+            }
+        }
+
+        // Function to update the table with sorted data
+        function updateTable() {
+            tableBody.innerHTML = ''; // Clear existing rows
+            populationData.forEach(data => {
+                const row = tableBody.insertRow();
+                const cellCountry = row.insertCell(0);
+                const cellPopulation = row.insertCell(1);
+                const cellGdpPerCapita = row.insertCell(2);
+                cellCountry.textContent = data.country;
+                cellPopulation.textContent = data.population.toLocaleString();
+                cellGdpPerCapita.textContent = `$${data.gdpPerCapita.toLocaleString()}`;
+            });
+        }
+
+        // Function to update the charts with sorted data
+        function updateCharts() {
+            const labels = populationData.map(data => data.country);
+            const populations = populationData.map(data => data.population);
+            const gdpPerCapita = populationData.map(data => data.gdpPerCapita);
+
+            // Update Population Chart
+            populationChart.data.labels = labels;
+            populationChart.data.datasets[0].data = populations;
+            populationChart.update();
+
+            // Update GDP Chart
+            gdpChart.data.labels = labels;
+            gdpChart.data.datasets[0].data = gdpPerCapita;
+            gdpChart.update();
+        }
+
+        // Example usage: sort by population on page load
+        sortPopulationData('population');
+
+        // Add event listeners for sorting by clicking table headers
+        document.getElementById('countryHeader').addEventListener('click', () => sortPopulationData('country'));
+        document.getElementById('populationHeader').addEventListener('click', () => sortPopulationData('population'));
+        document.getElementById('gdpHeader').addEventListener('click', () => sortPopulationData('gdp'));
+    </script>
+</body>
+</html>
